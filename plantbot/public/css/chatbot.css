@@ -1,248 +1,344 @@
-/* File: ~/frappe-bench/apps/plantbot/plantbot/public/css/chatbot.css */
+/* Updated Chatbot CSS */
+
+/* Include Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Raleway:wght@400;700&display=swap');
+
+/* Reset some basic styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
 /* Chatbot Toggle Button */
 .chatbot-toggle-button {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: #81C784; /* Light Green */
+    bottom: 80px; /* Moved up from the bottom */
+    right: 30px;
+    background-color: #66BB6A; /* Brighter green */
     color: #fff;
     border: none;
     border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    font-size: 24px;
+    width: 65px;
+    height: 65px;
+    font-size: 28px;
     cursor: pointer;
     z-index: 1000;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    animation: bounce 2s infinite;
-  }
-  
-  .chatbot-toggle-button:hover {
-    background-color: #66BB6A;
-  }
-  
-  /* Keyframes for bounce animation */
-  @keyframes bounce {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    animation: floatUp 2s ease-in-out infinite;
+    transition: transform 0.3s ease;
+    position: fixed;
+}
+
+/* Tooltip for the Toggle Button */
+.chatbot-toggle-button::after {
+    content: 'Chat with Plantbot!';
+    position: absolute;
+    bottom: 75px; /* Position above the button */
+    right: 50%;
+    transform: translateX(50%);
+    background-color: #2E7D32; /* Dark green background */
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+}
+
+.chatbot-toggle-button:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+.chatbot-toggle-button:hover {
+    transform: translateY(-5px);
+}
+
+/* Floating animation */
+@keyframes floatUp {
     0%, 100% {
-      transform: translateY(-5%);
+        transform: translateY(0);
     }
     50% {
-      transform: translateY(0);
+        transform: translateY(-10px);
     }
-  }
-  
-  /* Chatbot Container */
-  .chatbot-container {
+}
+
+/* Chatbot Container */
+.chatbot-container {
     position: fixed;
-    bottom: 80px;
-    right: 20px;
-    width: 400px; /* Increased width */
+    bottom: 120px; /* Adjusted to match toggle button */
+    right: 30px;
+    width: 360px;
     max-height: 500px;
-    border-radius: 10px;
-    background-color: #E8F5E9; /* Light Green Background */
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    border-radius: 20px;
+    background-color: #fff;
+    background-image: url('https://www.toptal.com/designers/subtlepatterns/patterns/leaf.png'); /* Subtle leaf pattern */
+    background-size: cover;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
-    font-family: 'Verdana', sans-serif;
+    font-family: 'Raleway', sans-serif;
     font-size: 14px;
     color: #333;
     z-index: 999;
     overflow: hidden;
-    transition: all 0.3s ease;
-  }
-  
-  /* Chatbot Header */
-  .chatbot-header {
-    background: linear-gradient(to right, #81C784, #66BB6A); /* Light Green Gradient */
-    padding: 10px;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.8);
+    transition: all 0.3s ease-in-out;
+}
+
+/* Show chatbot container */
+.chatbot-container.active {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+/* Chatbot Header */
+.chatbot-header {
+    background: linear-gradient(120deg, #66BB6A, #2E7D32); /* Mixed light and dark greens */
+    background-size: 200% 200%;
+    animation: gradientAnimation 5s ease infinite;
+    padding: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     color: #fff;
-  }
-  
-  .header-left {
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+
+/* Gradient animation */
+@keyframes gradientAnimation {
+    0% {background-position: 0% 50%;}
+    50% {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+}
+
+.header-left {
     display: flex;
     align-items: center;
-  }
-  
-  .assistant-avatar {
+}
+
+.assistant-avatar {
     position: relative;
-  }
-  
-  .assistant-avatar img {
-    width: 40px;
-    height: 40px;
+}
+
+.assistant-avatar img {
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
-  }
-  
-  .online-indicator {
+}
+
+.online-indicator {
     position: absolute;
-    bottom: 2px;
-    right: 2px;
-    width: 10px;
-    height: 10px;
-    background-color: #00ff00;
+    bottom: 3px;
+    right: 3px;
+    width: 12px;
+    height: 12px;
+    background-color: #00E676; /* Bright green */
     border: 2px solid #fff;
     border-radius: 50%;
-  }
-  
-  .assistant-info {
-    margin-left: 10px;
-  }
-  
-  .assistant-info h3 {
+}
+
+.assistant-info {
+    margin-left: 12px;
+}
+
+.assistant-info h3 {
     margin: 0;
     font-size: 16px;
-  }
-  
-  .assistant-info p {
+    font-weight: 700;
+}
+
+.assistant-info p {
     margin: 0;
     font-size: 12px;
-    color: #C8E6C9;
-  }
-  
-  .header-right {
+    color: #C8E6C9; /* Light green */
+}
+
+.header-right {
     display: flex;
-    gap: 5px;
-  }
-  
-  .chatbot-header-button {
+}
+
+.chatbot-header-button {
     background: none;
     border: none;
     color: #fff;
     cursor: pointer;
-    font-size: 18px;
-  }
-  
-  .chatbot-header-button:hover {
-    color: #C8E6C9;
-  }
-  
-  /* Chat Window */
-  #chat-window {
+    font-size: 20px;
+    margin-left: 15px;
+    position: relative;
+    transition: color 0.3s;
+}
+
+.chatbot-header-button:hover {
+    color: #C8E6C9; /* Lighter green */
+}
+
+.chatbot-header-button:focus {
+    outline: none;
+}
+
+/* Styling for the top buttons */
+.chatbot-header-button i {
+    font-size: 24px;
+}
+
+/* Chat Window */
+#chat-window {
     flex: 1;
-    padding: 10px;
+    padding: 15px;
     overflow-y: auto;
-    background-color: #F1F8E9; /* Very Light Green */
+    background-color: rgba(255, 255, 255, 0.85); /* Slightly transparent */
     display: flex;
     flex-direction: column;
-  }
-  
-  .message {
-    margin: 5px 0;
-    max-width: 80%;
+}
+
+/* Scrollbar Styling */
+#chat-window::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chat-window::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 5px;
+}
+
+.message {
+    margin: 10px 0;
+    max-width: 75%;
     word-wrap: break-word;
-    padding: 8px 12px;
-    border-radius: 15px;
+    padding: 10px 15px;
+    border-radius: 20px;
     position: relative;
-  }
-  
-  .user-message {
+    font-size: 14px;
+    line-height: 1.4;
+    font-family: 'Poppins', sans-serif;
+}
+
+.user-message {
     align-self: flex-end;
-    background-color: #81C784; /* Light Green */
+    background-color: #66BB6A; /* Brighter green */
     color: #fff;
     border-bottom-right-radius: 0;
-  }
-  
-  .bot-message {
+}
+
+.bot-message {
     align-self: flex-start;
-    background-color: #fff;
+    background-color: #E8F5E9; /* Light green background */
     color: #333;
     border-bottom-left-radius: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  }
-  
-  .timestamp {
-    font-size: 10px;
-    color: #999;
-    margin-top: 2px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Improved Timestamp Styling */
+.timestamp {
+    font-size: 11px;
+    color: #555; /* Darker for better visibility */
+    margin-top: 5px;
     display: block;
     text-align: right;
-  }
-  
-  /* Typing Indicator */
-  .typing-indicator {
+    font-style: italic;
+}
+
+/* Typing Indicator */
+.typing-indicator {
     display: flex;
     align-items: center;
     color: #666;
     margin-top: 5px;
-  }
-  
-  .typing-indicator i {
-    margin-right: 5px;
-    font-size: 16px;
-    color: #66BB6A; /* Light Green */
-  }
-  
-  /* Input Container */
-  .input-container {
+}
+
+.typing-indicator i {
+    margin-right: 8px;
+    font-size: 18px;
+    color: #2E7D32; /* Dark green */
+    animation: typing 1s infinite;
+}
+
+/* Typing animation */
+@keyframes typing {
+    0% { opacity: 0.2; }
+    20% { opacity: 1; }
+    100% { opacity: 0.2; }
+}
+
+/* Input Container */
+.input-container {
     display: flex;
-    padding: 10px;
-    border-top: 1px solid #ccc;
-    align-items: center;
-    background-color: #E8F5E9; /* Light Green Background */
-  }
-  
-  .input-container input[type="text"] {
-    flex: 1;
     padding: 10px 15px;
+    border-top: 1px solid #eee;
+    align-items: center;
+    background-color: #fff;
+}
+
+.input-container input[type="text"] {
+    flex: 1;
+    padding: 12px 20px;
     border: 1px solid #ccc;
-    border-radius: 25px;
+    border-radius: 30px;
     outline: none;
-    background-color: #F1F8E9; /* Very Light Green */
-  }
-  
-  .input-container input[type="text"]:focus {
-    border-color: #81C784; /* Light Green */
-  }
-  
-  .input-container button {
+    background-color: #f9f9f9;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.input-container input[type="text"]::placeholder {
+    color: #aaa;
+    font-style: italic;
+}
+
+.input-container input[type="text"]:focus {
+    border-color: #66BB6A; /* Brighter green */
+}
+
+.input-container button {
     background: none;
     border: none;
     cursor: pointer;
-    margin-left: 5px;
-  }
-  
-  .input-container .voice-button i,
-  .input-container .send-button i {
-    font-size: 20px;
-    color: #666;
-  }
-  
-  .input-container .voice-button:hover i,
-  .input-container .send-button:hover i {
-    color: #81C784; /* Light Green */
-  }
-  
-  .is-recording .voice-button i {
-    color: #d32f2f; /* Change color when recording */
-  }
-  
-  .is-recording .voice-button:hover i {
-    color: #b71c1c;
-  }
-  
-  /* Adjustments for minimized state */
-  .chatbot-container.minimized {
-    height: 60px;
-  }
-  
-  .chatbot-container.minimized #chat-window,
-  .chatbot-container.minimized .input-container {
+    margin-left: 10px;
+}
+
+.input-container .voice-button i,
+.input-container .send-button i {
+    font-size: 22px;
+    color: #66BB6A; /* Brighter green */
+}
+
+.input-container .voice-button:hover i,
+.input-container .send-button:hover i {
+    color: #2E7D32; /* Dark green */
+}
+
+.is-recording .voice-button i {
+    color: #D32F2F; /* Red color when recording */
+}
+
+.is-recording .voice-button:hover i {
+    color: #B71C1C;
+}
+
+/* Adjustments for minimized state */
+.chatbot-container.minimized {
+    max-height: 80px;
+}
+
+.chatbot-container.minimized #chat-window,
+.chatbot-container.minimized .input-container {
     display: none;
-  }
-  
-  /* Adjustments for mobile responsiveness */
-  @media screen and (max-width: 600px) {
+}
+
+/* Adjustments for mobile responsiveness */
+@media screen and (max-width: 480px) {
     .chatbot-container {
-      width: 90%;
-      right: 5%;
-      bottom: 80px;
+        width: 90%;
+        right: 5%;
+        bottom: 120px;
     }
-  }
+}

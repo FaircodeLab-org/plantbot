@@ -1,4 +1,4 @@
-// File: ~/frappe-bench/apps/plantbot/plantbot/public/js/chatbot.js
+// Updated Chatbot JavaScript
 
 document.addEventListener('DOMContentLoaded', function () {
   // Inject the chatbot widget into the body
@@ -8,11 +8,11 @@ document.addEventListener('DOMContentLoaded', function () {
   <!-- Chatbot Widget HTML -->
   <div id="chatbot-widget">
     <!-- Chatbot Toggle Button -->
-    <button id="chatbot-toggle" class="chatbot-toggle-button">
-      <i class="fas fa-comment"></i>
+    <button id="chatbot-toggle" class="chatbot-toggle-button" aria-label="Open Chat">
+      <i class="fas fa-comment-dots"></i>
     </button>
-    <!-- Chatbot Container (Initially Hidden) -->
-    <div class="chatbot-container" id="chatbot-container" style="display: none;">
+    <!-- Chatbot Container -->
+    <div class="chatbot-container" id="chatbot-container">
       <!-- Chatbot Header -->
       <div class="chatbot-header">
         <div class="header-left">
@@ -22,14 +22,14 @@ document.addEventListener('DOMContentLoaded', function () {
           </div>
           <div class="assistant-info">
             <h3>Plantbot</h3>
-            <p>Online | Typically replies instantly</p>
+            <p>Online</p>
           </div>
         </div>
         <div class="header-right">
-          <button id="chatbot-minimize" class="chatbot-header-button">
-            <i class="fas fa-chevron-down"></i>
+          <button id="chatbot-minimize" class="chatbot-header-button" aria-label="Minimize Chat">
+            <i class="fas fa-window-minimize"></i>
           </button>
-          <button id="chatbot-close" class="chatbot-header-button">
+          <button id="chatbot-close" class="chatbot-header-button" aria-label="Close Chat">
             <i class="fas fa-times"></i>
           </button>
         </div>
@@ -40,13 +40,13 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
       <!-- Input Container -->
       <form id="chat-form" class="input-container">
-        <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" />
+        <input type="text" id="user-input" placeholder="How can I assist you today?" autocomplete="off" />
         <!-- Voice Input Button -->
-        <button type="button" id="voice-button" class="voice-button">
-          <i class="fas fa-microphone"></i>
+        <button type="button" id="voice-button" class="voice-button" aria-label="Voice Input">
+          <i class="fas fa-microphone-alt"></i>
         </button>
         <!-- Send Button -->
-        <button type="submit" id="send-button" class="send-button">
+        <button type="submit" id="send-button" class="send-button" aria-label="Send Message">
           <i class="fas fa-paper-plane"></i>
         </button>
       </form>
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Toggle chatbot visibility
   chatbotToggle.onclick = function () {
-    chatbotContainer.style.display = 'flex';
+    chatbotContainer.classList.add('active');
     chatbotToggle.style.display = 'none';
     isMinimized = false;
 
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!chatWindow.dataset.hasWelcome) {
       var welcomeMessage = document.createElement('div');
       welcomeMessage.className = 'bot-message message';
-      welcomeMessage.innerHTML = '<strong>Plantbot:</strong> Hello! I\'m your assistant from Plantrich Agritech Private Limited. How can I help you today?';
+      welcomeMessage.innerHTML = '🌿 Hello! I\'m your assistant from Plantrich Agritech Private Limited. How can I help you today?';
       chatWindow.appendChild(welcomeMessage);
       appendTimestamp(welcomeMessage);
       chatWindow.dataset.hasWelcome = 'true';
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Close chatbot
   chatbotClose.onclick = function () {
-    chatbotContainer.style.display = 'none';
+    chatbotContainer.classList.remove('active');
     chatbotToggle.style.display = 'block';
   };
 
@@ -100,13 +100,15 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!isMinimized) {
       chatbotContainer.classList.add('minimized');
       isMinimized = true;
-      // Change icon to chevron-up
-      chatbotMinimize.innerHTML = '<i class="fas fa-chevron-up"></i>';
+      // Change icon to window-maximize
+      chatbotMinimize.innerHTML = '<i class="fas fa-window-maximize"></i>';
+      chatbotMinimize.setAttribute('aria-label', 'Maximize Chat');
     } else {
       chatbotContainer.classList.remove('minimized');
       isMinimized = false;
-      // Change icon back to chevron-down
-      chatbotMinimize.innerHTML = '<i class="fas fa-chevron-down"></i>';
+      // Change icon back to window-minimize
+      chatbotMinimize.innerHTML = '<i class="fas fa-window-minimize"></i>';
+      chatbotMinimize.setAttribute('aria-label', 'Minimize Chat');
     }
   };
 
@@ -130,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Display user's message
     var userMessage = document.createElement('div');
     userMessage.className = 'user-message message';
-    userMessage.innerHTML = '<strong>You:</strong> ' + userInput;
+    userMessage.innerHTML = userInput;
     chatWindow.appendChild(userMessage);
     appendTimestamp(userMessage);
 
@@ -156,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (r.message) {
           var botMessage = document.createElement('div');
           botMessage.className = 'bot-message message';
-          botMessage.innerHTML = '<strong>Plantbot:</strong> ' + r.message;
+          botMessage.innerHTML = r.message;
           chatWindow.appendChild(botMessage);
           appendTimestamp(botMessage);
 
@@ -170,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var botMessage = document.createElement('div');
         botMessage.className = 'bot-message message';
-        botMessage.innerHTML = '<strong>Plantbot:</strong> Sorry, an error occurred.';
+        botMessage.innerHTML = 'Sorry, an error occurred.';
         chatWindow.appendChild(botMessage);
         appendTimestamp(botMessage);
 
@@ -210,13 +212,13 @@ document.addEventListener('DOMContentLoaded', function () {
       // If already recording, stop the recognition
       recognition.stop();
       isRecording = false;
-      voiceButton.innerHTML = '<i class="fas fa-microphone"></i>';
+      voiceButton.innerHTML = '<i class="fas fa-microphone-alt"></i>';
       voiceButton.classList.remove('is-recording');
       return;
     }
 
     isRecording = true;
-    voiceButton.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+    voiceButton.innerHTML = '<i class="fas fa-stop-circle"></i>';
     voiceButton.classList.add('is-recording');
 
     var recognition = new webkitSpeechRecognition();
@@ -239,24 +241,25 @@ document.addEventListener('DOMContentLoaded', function () {
     recognition.onerror = function (event) {
       console.error('Voice recognition error:', event.error);
       isRecording = false;
-      voiceButton.innerHTML = '<i class="fas fa-microphone"></i>';
+      voiceButton.innerHTML = '<i class="fas fa-microphone-alt"></i>';
       voiceButton.classList.remove('is-recording');
     };
 
     recognition.onend = function () {
       console.log('Voice recognition ended.');
       isRecording = false;
-      voiceButton.innerHTML = '<i class="fas fa-microphone"></i>';
+      voiceButton.innerHTML = '<i class="fas fa-microphone-alt"></i>';
       voiceButton.classList.remove('is-recording');
     };
   }
 
   function showTypingIndicator() {
+    if (isTyping) return;
     isTyping = true;
     var typingIndicator = document.createElement('div');
     typingIndicator.className = 'typing-indicator';
     typingIndicator.id = 'typing-indicator';
-    typingIndicator.innerHTML = '<i class="fas fa-robot"></i> Typing...';
+    typingIndicator.innerHTML = '<i class="fas fa-ellipsis-h"></i> Plantbot is typing...';
     chatWindow.appendChild(typingIndicator);
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
