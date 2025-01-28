@@ -1,0 +1,7 @@
+## Plantbot
+
+plantbot
+
+#### License
+
+mit
