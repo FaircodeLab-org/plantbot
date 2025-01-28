@@ -1,9 +1,18 @@
 app_name = "plantbot"
-app_title = "Plantbot"
+app_title = "plantbot"
 app_publisher = "vinay"
 app_description = "plantbot"
 app_email = "reddysrivinayofficial@gmail.com"
 app_license = "mit"
+
+
+
+
+web_include_css = [
+    "/assets/plantbot/css/chatbot.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css",
+]
+web_include_js = "/assets/plantbot/js/chatbot.js"
 
 # Apps
 # ------------------
