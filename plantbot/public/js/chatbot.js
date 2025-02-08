@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var chatbotHTML = `
   <!-- Include Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
   <!-- Chatbot Widget HTML -->
   <div id="chatbot-widget">
     <!-- Chatbot Toggle Button -->
@@ -40,7 +41,15 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
       <!-- Input Container -->
       <form id="chat-form" class="input-container">
-        <input type="text" id="user-input" placeholder="How can I assist you today?" autocomplete="off" />
+        <!-- New Image Upload Button -->
+        <input type="file" id="image-input" accept="image/*" style="display: none;" />
+        <button type="button" id="image-button" class="image-button" aria-label="Upload Image">
+          <i class="fas fa-image"></i>
+        </button>
+
+        <!-- Existing Text Input -->
+        <input type="text" id="user-input" placeholder="Type a message or upload an image..." autocomplete="off" />
+
         <!-- Voice Input Button -->
         <button type="button" id="voice-button" class="voice-button" aria-label="Voice Input">
           <i class="fas fa-microphone-alt"></i>
@@ -60,6 +69,8 @@ document.addEventListener('DOMContentLoaded', function () {
   // Elements
   var sendButton = document.getElementById('send-button');
   var voiceButton = document.getElementById('voice-button');
+  var imageButton = document.getElementById('image-button');
+  var imageInput = document.getElementById('image-input');
   var userInputField = document.getElementById('user-input');
   var chatWindow = document.getElementById('chat-window');
   var chatbotToggle = document.getElementById('chatbot-toggle');
@@ -123,6 +134,27 @@ document.addEventListener('DOMContentLoaded', function () {
     startVoiceRecognition();
   };
 
+  // Image upload button click event
+  imageButton.onclick = function () {
+    // Trigger the hidden file input when the image button is clicked
+    imageInput.click();
+  };
+
+  // Handle image selection
+  imageInput.onchange = function () {
+    var file = imageInput.files[0];
+    if (file) {
+      // Display the selected image in the chat window
+      displayUserImage(file);
+
+      // Send the image to the server for processing
+      sendImage(file);
+
+      // Reset the input
+      imageInput.value = '';
+    }
+  };
+
   function sendMessage() {
     var userInput = userInputField.value.trim();
     if (userInput === '') return;
@@ -179,6 +211,72 @@ document.addEventListener('DOMContentLoaded', function () {
         chatWindow.scrollTop = chatWindow.scrollHeight;
       }
     });
+  }
+
+  function sendImage(file) {
+    // Show typing indicator
+    showTypingIndicator();
+
+    var formData = new FormData();
+    formData.append('image', file);
+
+    $.ajax({
+      url: '/api/method/plantbot.api.process_image',
+      type: 'POST',
+      data: formData,
+      headers: {
+        'X-Frappe-CSRF-Token': frappe.csrf_token
+      },
+      processData: false,
+      contentType: false,
+      success: function (r) {
+        // Remove typing indicator
+        hideTypingIndicator();
+
+        if (r.message) {
+          var botMessage = document.createElement('div');
+          botMessage.className = 'bot-message message';
+          botMessage.innerHTML = r.message;
+          chatWindow.appendChild(botMessage);
+          appendTimestamp(botMessage);
+
+          // Scroll to bottom
+          chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+      },
+      error: function (e) {
+        // Remove typing indicator
+        hideTypingIndicator();
+
+        var botMessage = document.createElement('div');
+        botMessage.className = 'bot-message message';
+        botMessage.innerHTML = 'Sorry, an error occurred.';
+        chatWindow.appendChild(botMessage);
+        appendTimestamp(botMessage);
+
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+      }
+    });
+  }
+
+  function displayUserImage(file) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var userMessage = document.createElement('div');
+      userMessage.className = 'user-message message';
+
+      // Create an image element
+      var img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.maxWidth = '200px';
+      img.style.borderRadius = '10px';
+
+      userMessage.appendChild(img);
+      chatWindow.appendChild(userMessage);
+      appendTimestamp(userMessage);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    };
+    reader.readAsDataURL(file);
   }
 
   function formatTime(date) {

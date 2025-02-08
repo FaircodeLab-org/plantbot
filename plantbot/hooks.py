@@ -14,6 +14,8 @@ web_include_css = [
 ]
 web_include_js = "/assets/plantbot/js/chatbot.js"
 
+
+
 # Apps
 # ------------------
 
