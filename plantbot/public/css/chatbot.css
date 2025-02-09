@@ -263,18 +263,19 @@
     100% { opacity: 0.2; }
 }
 
-/* Input Container */
 .input-container {
     display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
     padding: 10px 15px;
     border-top: 1px solid #eee;
-    align-items: center;
     background-color: #fff;
 }
 
 .input-container input[type="text"] {
-    flex: 1;
-    padding: 12px 20px;
+    flex: 1 1 auto; /* Allow it to grow and shrink */
+    min-width: 0;   /* Important to allow shrinking */
+    padding: 12px 10px;
     border: 1px solid #ccc;
     border-radius: 30px;
     outline: none;
@@ -293,18 +294,16 @@
 }
 
 .input-container button {
+    flex: 0 0 auto; /* Do not grow or shrink */
     background: none;
     border: none;
     cursor: pointer;
-    margin-left: 10px;
+    margin-left: 5px; /* Adjusted margin */
 }
 
-/* Image Upload Button Styles */
 .input-container .image-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    margin-right: 10px;
+    margin-left: 0;
+    margin-right: 5px; /* Adjusted margin */
 }
 
 .input-container .image-button i {
@@ -356,9 +355,16 @@
 
 /* Adjustments for mobile responsiveness */
 @media screen and (max-width: 480px) {
-    .chatbot-container {
-        width: 90%;
-        right: 5%;
-        bottom: 120px;
+    .input-container input[type="text"] {
+        padding: 10px 5px;
+    }
+
+    .input-container button {
+        margin-left: 3px;
+        margin-right: 3px;
+    }
+
+    .input-container .image-button {
+        margin-right: 3px;
     }
 }
