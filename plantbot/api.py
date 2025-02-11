@@ -47,6 +47,7 @@ def initialize_faq_embeddings():
                             'answer': faq['answer'],
                             'embedding': embedding
                         })
+                        frappe.logger().debug(f"Loaded embedding for FAQ '{faq['name']}': First 5 values: {embedding[:5]}...")
                     except Exception as e:
                         frappe.log_error(f"Error loading embedding for FAQ {faq['name']}: {str(e)}", "Chatbot Embedding Error")
                 else:
@@ -143,9 +144,6 @@ def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 def get_relevant_faqs(user_message, top_k=5):
-    """
-    Finds the most relevant FAQs based on the user's message using embeddings.
-    """
     global faq_embeddings
 
     if not faq_embeddings:
@@ -155,7 +153,9 @@ def get_relevant_faqs(user_message, top_k=5):
     # Generate embedding for user message
     user_embedding = get_embedding(user_message)
     if not user_embedding:
+        frappe.log_error("Failed to get embedding for user message.", "Chatbot Error")
         return []
+    frappe.logger().debug(f"Generated embedding for user message: First 5 values: {user_embedding[:5]}...")
 
     # Compute cosine similarity between user message and FAQs
     similarities = []
@@ -163,14 +163,21 @@ def get_relevant_faqs(user_message, top_k=5):
         try:
             sim = cosine_similarity(user_embedding, faq['embedding'])
             similarities.append((sim, faq))
+            # Log each similarity score
+            frappe.logger().debug(f"Similarity between user message and FAQ '{faq['name']}': {sim}")
         except Exception as e:
             frappe.log_error(f"Error computing similarity for FAQ {faq['name']}: {str(e)}", "Chatbot Similarity Error")
 
     # Sort FAQs by similarity score in descending order
     similarities.sort(key=lambda x: x[0], reverse=True)
 
-    # Return top_k most similar FAQs
-    relevant_faqs = [faq for sim, faq in similarities[:top_k] if sim > 0]  # Exclude FAQs with zero similarity
+    # # Return top_k most similar FAQs
+    # relevant_faqs = [faq for sim, faq in similarities[:top_k] if sim > 0]  # Exclude FAQs with zero similarity
+    MIN_SIMILARITY_THRESHOLD = 0.0  # You can adjust this value
+    relevant_faqs = [faq for sim, faq in similarities[:top_k] if sim >= MIN_SIMILARITY_THRESHOLD]
+
+    # Log the selected relevant FAQs
+    frappe.logger().debug(f"Top {len(relevant_faqs)} relevant FAQs selected.")
     return relevant_faqs
 
 def get_gpt_interpreted_response(user_message, relevant_faqs):
@@ -221,7 +228,7 @@ def get_gpt_interpreted_response(user_message, relevant_faqs):
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o",  # Make sure this model is available to you
+            model="gpt-3.5-turbo",  # Make sure this model is available to you
             messages=[
                 {"role": "system", "content": system_prompt.strip()},
                 {"role": "user", "content": user_message.strip()}
@@ -310,13 +317,14 @@ def get_plant_diagnosis(image_file):
 
 def process_plant_id_response(result):
     # Extract plant suggestions
-    suggestions = result.get('suggestions', [])
+    classification = result.get('result', {}).get('classification', {})
+    suggestions = classification.get('suggestions', [])
 
     if suggestions:
         # Take the top suggestion
         suggestion = suggestions[0]
-        plant_name = suggestion.get('plant_name', 'Unknown plant')
-        details = suggestion.get('plant_details', {})
+        plant_name = suggestion.get('name', 'Unknown plant')
+        details = suggestion.get('details', {})
         common_names = details.get('common_names', [])
         description = details.get('wiki_description', {}).get('value', '')
         plant_url = details.get('url', '')
@@ -330,15 +338,16 @@ def process_plant_id_response(result):
             response_message += f"<a href='{plant_url}' target='_blank'>Learn more</a><br><br>"
 
         # Health assessment
-        is_healthy = suggestion.get('plant_health_assessment', {}).get('is_healthy', True)
+        health_assessment = result.get('result', {})
+        is_healthy = health_assessment.get('is_healthy', {}).get('binary', True)
         if not is_healthy:
             response_message += "<b>The plant may have health issues.</b><br>"
-            diseases = suggestion.get('diseases', [])
+            diseases = health_assessment.get('disease', {}).get('suggestions', [])
             if diseases:
                 response_message += "<b>Possible Diseases:</b><br>"
                 for disease in diseases:
                     name = disease.get('name', 'Unknown disease')
-                    disease_details = disease.get('disease_details', {})
+                    disease_details = disease.get('details', {})
                     disease_description = disease_details.get('description', {}).get('value', '')
                     treatment = disease_details.get('treatment', {})
                     response_message += f"<b>{name}</b><br>"
