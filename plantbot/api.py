@@ -1,41 +1,26 @@
-# File: ~/frappe-bench/apps/plantbot/plantbot/api.py
+# File: plantbot/plantbot/api.py
 
 import frappe
 import openai
 import requests
 import base64
 import json
-
-# File: ~/frappe-bench/apps/plantbot/plantbot/api.py
-
-
 import threading
-import time
 import numpy as np
 import os
+import time
+
+# Import helper functions from faqs.py
+from plantbot.plantbot.doctype.faqs.faqs import get_openai_api_key, get_embedding
 
 # Global variables
 faq_embeddings = []
 embeddings_initialized = False
 embeddings_lock = threading.Lock()
 
-def get_openai_api_key():
-    """
-    Retrieves the OpenAI API key from site_config.json or environment variables.
-    """
-    # Try to get API key from site config
-    openai_api_key = frappe.local.conf.get("openai_api_key", None)
-    if not openai_api_key:
-        # Try to get API key from environment variable
-        openai_api_key = os.environ.get('OPENAI_API_KEY')
-    if not openai_api_key:
-        frappe.log_error("OpenAI API key not found.", "Chatbot Error")
-    return openai_api_key
-
 def initialize_faq_embeddings():
     """
-    Initializes embeddings for FAQs.
-    This function should be called after the Frappe application context is ready.
+    Initializes embeddings for FAQs by loading them from the database.
     """
     global faq_embeddings
     global embeddings_initialized
@@ -46,33 +31,41 @@ def initialize_faq_embeddings():
             return
 
         try:
-            # Get the OpenAI API key
-            openai_api_key = get_openai_api_key()
-            if not openai_api_key:
-                faq_embeddings = []
-                return
+            # Fetch all FAQs with their embeddings
+            faqs = frappe.get_all('FAQS', fields=['name', 'question', 'answer', 'embedding'])
 
-            openai.api_key = openai_api_key
-
-            # Fetch all FAQs from the database
-            faqs = frappe.get_all('FAQS', fields=['name', 'question', 'answer'])
-
-            # Generate embeddings for each FAQ question
+            # Load embeddings for each FAQ
             faq_embeddings = []
             for faq in faqs:
-                try:
-                    # Generate embedding for the FAQ question
+                if faq['embedding']:
+                    try:
+                        # Load the embedding from JSON string
+                        embedding = json.loads(faq['embedding'])
+                        faq_embeddings.append({
+                            'name': faq['name'],
+                            'question': faq['question'],
+                            'answer': faq['answer'],
+                            'embedding': embedding
+                        })
+                    except Exception as e:
+                        frappe.log_error(f"Error loading embedding for FAQ {faq['name']}: {str(e)}", "Chatbot Embedding Error")
+                else:
+                    # If embedding is missing, compute and save it
+                    openai_api_key = get_openai_api_key()
+                    if not openai_api_key:
+                        frappe.log_error("OpenAI API key is not set.", "Chatbot Error")
+                        continue
+
                     embedding = get_embedding(faq['question'])
+                    # Save the embedding in the database
+                    frappe.db.set_value('FAQS', faq['name'], 'embedding', json.dumps(embedding))
+                    frappe.db.commit()
                     faq_embeddings.append({
                         'name': faq['name'],
                         'question': faq['question'],
                         'answer': faq['answer'],
                         'embedding': embedding
                     })
-                    # Brief sleep to avoid rate limits
-                    time.sleep(0.05)
-                except Exception as e:
-                    frappe.log_error(f"Error generating embedding for FAQ {faq['name']}: {str(e)}", "Chatbot Embedding Error")
             embeddings_initialized = True  # Mark embeddings as initialized
         except Exception as e:
             frappe.log_error(f"Error initializing embeddings: {str(e)}", "Chatbot Embedding Initialization Error")
@@ -121,10 +114,12 @@ def get_embedding(text, model="text-embedding-ada-002"):
     """
     # Ensure OpenAI API key is set
     if not openai.api_key:
-        openai.api_key = get_openai_api_key()
-        if not openai.api_key:
+        openai_api_key = get_openai_api_key()
+        if not openai_api_key:
             frappe.log_error("OpenAI API key is not set.", "Chatbot Error")
             return []
+
+        openai.api_key = openai_api_key
 
     try:
         response = openai.Embedding.create(
@@ -175,7 +170,7 @@ def get_relevant_faqs(user_message, top_k=5):
     similarities.sort(key=lambda x: x[0], reverse=True)
 
     # Return top_k most similar FAQs
-    relevant_faqs = [faq for _, faq in similarities[:top_k] if _ > 0]  # Exclude FAQs with zero similarity
+    relevant_faqs = [faq for sim, faq in similarities[:top_k] if sim > 0]  # Exclude FAQs with zero similarity
     return relevant_faqs
 
 def get_gpt_interpreted_response(user_message, relevant_faqs):
@@ -184,10 +179,12 @@ def get_gpt_interpreted_response(user_message, relevant_faqs):
     """
     # Ensure OpenAI API key is set
     if not openai.api_key:
-        openai.api_key = get_openai_api_key()
-        if not openai.api_key:
+        openai_api_key = get_openai_api_key()
+        if not openai_api_key:
             frappe.log_error("OpenAI API key is not set.", "Chatbot Error")
             return "I'm sorry, I cannot process your request at the moment."
+
+        openai.api_key = openai_api_key
 
     # Prepare the FAQ prompt with relevant FAQs
     if relevant_faqs:
@@ -224,7 +221,7 @@ def get_gpt_interpreted_response(user_message, relevant_faqs):
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o",  # Make sure this model is available to you
             messages=[
                 {"role": "system", "content": system_prompt.strip()},
                 {"role": "user", "content": user_message.strip()}
@@ -313,14 +310,13 @@ def get_plant_diagnosis(image_file):
 
 def process_plant_id_response(result):
     # Extract plant suggestions
-    classification = result.get('result', {}).get('classification', {})
-    suggestions = classification.get('suggestions', [])
+    suggestions = result.get('suggestions', [])
 
     if suggestions:
         # Take the top suggestion
         suggestion = suggestions[0]
-        plant_name = suggestion.get('name', 'Unknown plant')
-        details = suggestion.get('details', {})
+        plant_name = suggestion.get('plant_name', 'Unknown plant')
+        details = suggestion.get('plant_details', {})
         common_names = details.get('common_names', [])
         description = details.get('wiki_description', {}).get('value', '')
         plant_url = details.get('url', '')
@@ -334,16 +330,15 @@ def process_plant_id_response(result):
             response_message += f"<a href='{plant_url}' target='_blank'>Learn more</a><br><br>"
 
         # Health assessment
-        health_assessment = result.get('result', {})
-        is_healthy = health_assessment.get('is_healthy', {}).get('binary', True)
+        is_healthy = suggestion.get('plant_health_assessment', {}).get('is_healthy', True)
         if not is_healthy:
             response_message += "<b>The plant may have health issues.</b><br>"
-            diseases = health_assessment.get('disease', {}).get('suggestions', [])
+            diseases = suggestion.get('diseases', [])
             if diseases:
                 response_message += "<b>Possible Diseases:</b><br>"
                 for disease in diseases:
                     name = disease.get('name', 'Unknown disease')
-                    disease_details = disease.get('details', {})
+                    disease_details = disease.get('disease_details', {})
                     disease_description = disease_details.get('description', {}).get('value', '')
                     treatment = disease_details.get('treatment', {})
                     response_message += f"<b>{name}</b><br>"
