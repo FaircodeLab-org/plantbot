@@ -228,7 +228,7 @@ def get_gpt_interpreted_response(user_message, relevant_faqs):
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # Make sure this model is available to you
+            model="gpt-4-1106-preview",  # Make sure this model is available to you
             messages=[
                 {"role": "system", "content": system_prompt.strip()},
                 {"role": "user", "content": user_message.strip()}
